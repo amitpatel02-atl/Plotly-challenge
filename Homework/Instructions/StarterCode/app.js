@@ -27,23 +27,24 @@ function init() {
 
   // Assign the value of the dropdown menu option to a variable
   var dropValue = dropdownMenu.property("value");
+  console.log(dropValue)
   
   demographic_panel(dropValue);
+  create_charts(dropValue);
   
 }
-
-
-
-
-// This function is called when a dropdown menu item is selected
-function updatePlotly() {
-  
-
-}
-
 
 function demographic_panel(dropValue){
-  
+
+  //   Read JSON file
+  d3.json("samples.json").then((data)=>{
+
+  // Read data
+  metadata=data.metadata;
+
+  var array= metadata.filter(sample_object => sample_object.id == dropValue);
+  var results= array[0];
+
     // Use d3 to select the panel with id of `#sample-metadata`
     var panel = d3.select("#sample-metadata");
   
@@ -51,49 +52,61 @@ function demographic_panel(dropValue){
     panel.html("");
   
     // Use `Object.entries` to add each key & value to the panel
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(results).forEach(([key, value]) => {
       panel.append("h5").text(`${key}:${value}`);
     });
-    });
-  console.log(sample)
+  });
+  
+  
 }
-  metadata(sample);
 
-// function create_bubble_chart(sample){
-  
-//   // Use `d3.json` to fetch the sample data for the plots
-//   var plotData = `/samples/${sample}`;
+function create_charts(sample){
 
-//   // Build a Bubble Chart using the sample data
-//   d3.json(plotData).then(function(data){
-//     var x_axis = data.otu_ids;
-//     var y_axis = data.sample_values;
-//     var size = data.sample_values;
-//     var color = data.otu_ids;
-//     var texts = data.otu_labels;
-  
-//     var bubble = {
-//       x: x_axis,
-//       y: y_axis,
-//       text: texts,
-//       mode: `markers`,
-//       marker: {
-//         size: size,
-//         color: color
-//       }
-//     };
+  //   Read JSON file
+  d3.json("samples.json").then((data)=>{
 
-//     var data = [bubble];
-//     var layout = {
-//       title: "Belly Button Bacteria",
-//       xaxis: {title: "OTU ID"}
-//     };
-//     Plotly.newPlot("bubble", data, layout);
+    // Read data
+    samples=data.samples;
   
-// create_bubble_chart(sample);
-// });
-// };
+      // We filtered the samples from the samples.json as well as the results
+    var array= samples.filter(sample_object => sample_object.id == sample);
+    var results= array[0];
+    var otu_ids= results.otu_ids;
+    var sample_values= results.sample_values;
+    var otu_labels=results.otu_labels;
+
+  
+    var bubble = {
+      x: otu_ids,
+      y: sample_values,
+      text: otu_labels,
+      mode: `markers`,
+      marker: {
+        size: sample_values,
+        color: otu_ids,
+        colorscale: 'Earth'
+      }
+    };
+
+    var data = [bubble];
+    var layout = {
+      title: "Belly Button Bacteria",
+      xaxis: {title: "OTU ID"}
+    };
+    Plotly.newPlot("bubble", data, layout);
+  
+  var bar = [{
+    x: sample_values.slice(0,10).reverse(),
+    y: otu_ids.slice(0,10).map(otuID => `OTU ${otuID}`).reverse(),
+    type: "bar",
+    orientation: "h",
+
+  }];
+  Plotly.newPlot("bar", bar);
+});
+};
 
 function optionChanged (sample) {
-
+demographic_panel(sample);
+create_charts(sample);
 }
